@@ -92,7 +92,7 @@ test('current PWA manifest keeps its install scope and referenced icon assets', 
   ]));
 
   for (const icon of icons) {
-    const local = String(icon.src || '').replace(/^\/Evia\//, '');
+    const local = String(icon.src || '').replace(/^\/Evia-2\.0\//, '');
     expect(fs.existsSync(path.join(root, local)), `missing PWA icon ${icon.src}`).toBeTruthy();
   }
 });
