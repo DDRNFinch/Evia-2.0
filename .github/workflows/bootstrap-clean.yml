@@ -33,17 +33,18 @@ jobs:
           git -C "$TMP_SOURCE" checkout --detach FETCH_HEAD
           rm -rf "$TMP_SOURCE/.git"
 
-          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+          # Workflow files are copied separately through the connected GitHub app.
+          rm -rf "$TMP_SOURCE/.github/workflows"
+
+          # Preserve this one-time workflow until the app files have been pushed.
+          find . -mindepth 1 -maxdepth 1 ! -name '.git' ! -name '.github' -exec rm -rf {} +
           cp -a "$TMP_SOURCE/." .
+          rm -f New
 
           # Evia 2.0 is hosted under a different GitHub Pages repository path.
-          # Change only absolute app-path references; UI and behaviour remain unchanged.
           while IFS= read -r -d '' file; do
             sed -i 's#/Evia/#/Evia-2.0/#g' "$file"
           done < <(grep -RIlZ --exclude-dir='.git' '/Evia/' . || true)
-
-          # The copied source must not contain the one-time bootstrap workflow.
-          rm -f .github/workflows/bootstrap-clean.yml
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
