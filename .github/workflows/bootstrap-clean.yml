@@ -1,4 +1,4 @@
-# transfer retry 2
+# transfer retry 3
 name: Bootstrap verified clean Evia 2.0
 
 on:
@@ -43,8 +43,12 @@ jobs:
             sed -i 's#/Evia/#/Evia-2.0/#g' "$file"
           done < <(grep -RIlZ --exclude-dir='.git' '/Evia/' . || true)
 
+          # Do not allow the Actions token to touch workflow files.
+          git restore --source=HEAD --staged --worktree .github/workflows
+
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
+          git add -A -- . ':(exclude).github/workflows/**'
+          git diff --cached --name-only
           git commit -m 'Install verified clean Evia 2.0 build'
           git push origin HEAD:main
