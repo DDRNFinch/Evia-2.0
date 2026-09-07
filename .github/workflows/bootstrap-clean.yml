@@ -1,0 +1,52 @@
+name: Bootstrap verified clean Evia 2.0
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/bootstrap-clean.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out Evia 2.0
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace placeholder with verified clean build
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_SHA='2f2a500f3f56397a9d5925c0f75138a917f06e91'
+          TMP_SOURCE="$(mktemp -d)"
+
+          git init "$TMP_SOURCE"
+          git -C "$TMP_SOURCE" remote add origin https://github.com/DDRNFinch/Evia.git
+          git -C "$TMP_SOURCE" fetch --depth 1 origin "$SOURCE_SHA"
+          git -C "$TMP_SOURCE" checkout --detach FETCH_HEAD
+          rm -rf "$TMP_SOURCE/.git"
+
+          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+          cp -a "$TMP_SOURCE/." .
+
+          # Evia 2.0 is hosted under a different GitHub Pages repository path.
+          # Change only absolute app-path references; UI and behaviour remain unchanged.
+          while IFS= read -r -d '' file; do
+            sed -i 's#/Evia/#/Evia-2.0/#g' "$file"
+          done < <(grep -RIlZ --exclude-dir='.git' '/Evia/' . || true)
+
+          # The copied source must not contain the one-time bootstrap workflow.
+          rm -f .github/workflows/bootstrap-clean.yml
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Install verified clean Evia 2.0 build'
+          git push origin HEAD:main
