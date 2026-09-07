@@ -1,0 +1,13 @@
+name = "evia-teach-test"
+main = "worker-v5.js"
+compatibility_date = "2026-09-04"
+
+[ai]
+binding = "AI"
+
+[vars]
+ALLOWED_ORIGIN = "https://ddrnfinch.github.io"
+MODEL = "@cf/meta/llama-3.1-8b-instruct-fast"
+EPA_MODEL = "@cf/nvidia/nemotron-3-120b-a12b"
+EPA_FALLBACK_MODEL = "@cf/zai-org/glm-4.7-flash"
+EPA_STRUCTURED_FALLBACK_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast"

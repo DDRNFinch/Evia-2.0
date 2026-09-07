@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5c400">
+<link rel="manifest" href="/Evia-2.0/manifest.webmanifest">
+<title>Evia PWA Check</title>
+<script>
+window.__pwaInstallPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();window.__pwaInstallPrompt=e;window.dispatchEvent(new Event('pwa-install-ready'));});
+</script>
+<style>*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f7f7f7;color:#171717}.wrap{max-width:760px;margin:auto;padding:24px 16px 48px}h1{font-size:28px;margin:0 0 8px}p{line-height:1.45}.card{background:#fff;border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 3px 18px rgba(0,0,0,.06)}.row{display:grid;grid-template-columns:28px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid #eee}.row:last-child{border-bottom:0}.status{font-weight:800}.pass{color:#16803d}.fail{color:#b42318}.warn{color:#9a6700}.detail{font-size:13px;color:#666;word-break:break-word;margin-top:3px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}button{border:0;border-radius:999px;padding:12px 18px;font-weight:700;background:#f5c400;color:#181818}button.secondary{background:#ececec;color:#222}button:disabled{opacity:.45}.summary{font-weight:800;font-size:18px}.small{font-size:13px;color:#666}</style>
+</head>
+<body><main class="wrap">
+<h1>Evia PWA diagnostic</h1>
+<p>This checks what Chrome can see and lets Chrome's captured native PWA prompt run directly.</p>
+<div class="actions"><button id="install" disabled>Install Evia</button><button id="run">Run checks</button><button class="secondary" id="reload">Reload page</button></div>
+<div id="installResult" class="card">Waiting for Chrome's native install event…</div>
+<div id="summary" class="card summary">Waiting to run…</div>
+<div id="results" class="card"></div>
+<p class="small">After pressing Install Evia, tell me exactly what appears and whether the resulting icon still has the Chrome badge.</p>
+</main>
+<script>
+const BASE='/Evia-2.0/',MANIFEST=BASE+'manifest.webmanifest',SW=BASE+'service-worker.js';
+const results=document.getElementById('results'),summary=document.getElementById('summary'),installBtn=document.getElementById('install'),installResult=document.getElementById('installResult');
+function syncInstall(){const ready=!!window.__pwaInstallPrompt;installBtn.disabled=!ready;installResult.textContent=ready?'Native install prompt captured. Press Install Evia.':'Waiting for Chrome\'s native install event…';}
+window.addEventListener('pwa-install-ready',syncInstall);window.addEventListener('appinstalled',()=>{installResult.textContent='Chrome fired appinstalled: Evia was reported installed.';installBtn.disabled=true;});syncInstall();
+installBtn.onclick=async()=>{const p=window.__pwaInstallPrompt;if(!p){installResult.textContent='No native install prompt is currently available. Reload the page once.';return}try{installResult.textContent='Opening Chrome native install prompt…';await p.prompt();const choice=await p.userChoice;installResult.textContent='Chrome install result: '+choice.outcome;window.__pwaInstallPrompt=null;installBtn.disabled=true;}catch(e){installResult.textContent='Install prompt error: '+e;}};
+function icon(s){return s==='pass'?'✓':s==='fail'?'✕':'!'}function add(l,s,d=''){const x=document.createElement('div');x.className='row';x.innerHTML=`<div class="status ${s}">${icon(s)}</div><div><strong>${l}</strong>${d?`<div class="detail">${d}</div>`:''}</div>`;results.appendChild(x)}
+async function imageCheck(url,n){return new Promise(r=>{const i=new Image();i.onload=()=>r({ok:i.naturalWidth===n&&i.naturalHeight===n,w:i.naturalWidth,h:i.naturalHeight});i.onerror=()=>r({ok:false,error:'failed to load'});i.src=url+'?diag='+Date.now()})}
+async function run(){results.innerHTML='';let f=0,w=0;const m=(l,s,d='')=>{add(l,s,d);if(s==='fail')f++;if(s==='warn')w++};m('Secure context',isSecureContext?'pass':'fail',location.origin);m('Current URL in app scope',location.pathname.startsWith(BASE)?'pass':'fail',location.href);try{const r=await fetch(MANIFEST+'?diag='+Date.now(),{cache:'no-store'}),j=await r.json();m('Manifest fetch',r.ok?'pass':'fail','HTTP '+r.status+' · '+(r.headers.get('content-type')||''));m('Manifest start_url',j.start_url===BASE?'pass':'warn',String(j.start_url));m('Manifest scope',j.scope===BASE?'pass':'warn',String(j.scope));m('Manifest display',j.display&&j.display!=='browser'?'pass':'fail',String(j.display));m('Manifest app id',j.id===BASE?'pass':'warn',String(j.id));}catch(e){m('Manifest fetch','fail',String(e))}const a=await imageCheck(BASE+'icons/evia-192.png',192);m('192px icon',a.ok?'pass':'fail',a.error||`${a.w} × ${a.h}`);const b=await imageCheck(BASE+'icons/evia-512.png',512);m('512px icon',b.ok?'pass':'fail',b.error||`${b.w} × ${b.h}`);if(!('serviceWorker'in navigator))m('Service worker support','fail','Unavailable');else{m('Service worker support','pass','Available');let reg=null;try{reg=await navigator.serviceWorker.register(SW,{scope:BASE});m('Service worker registration','pass',reg.scope)}catch(e){m('Service worker registration','fail',String(e))}if(reg){const wk=reg.active||reg.waiting||reg.installing;m('Service worker state',wk&&wk.state==='activated'?'pass':'warn',wk?wk.state:'No worker')}try{const ready=await Promise.race([navigator.serviceWorker.ready,new Promise((_,rej)=>setTimeout(()=>rej(new Error('ready timeout')),5000))]);m('Service worker ready','pass',ready.scope)}catch(e){m('Service worker ready','fail',String(e))}m('Page controlled by service worker',navigator.serviceWorker.controller?'pass':'fail',navigator.serviceWorker.controller?.scriptURL||'No controller')}m('Standalone display right now',matchMedia('(display-mode: standalone)').matches?'pass':'warn',matchMedia('(display-mode: standalone)').matches?'Already standalone':'Currently in browser');m('beforeinstallprompt',window.__pwaInstallPrompt?'pass':'warn',window.__pwaInstallPrompt?'Native install prompt captured':'Not currently captured');summary.textContent=f?`${f} failing check${f===1?'':'s'} · ${w} warning${w===1?'':'s'}`:`No hard failures · ${w} warning${w===1?'':'s'}`;syncInstall()}
+document.getElementById('run').onclick=run;document.getElementById('reload').onclick=()=>location.reload();window.addEventListener('load',run);
+</script></body></html>

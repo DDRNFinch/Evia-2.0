@@ -1,0 +1,9 @@
+{
+  "version": "1.2",
+  "released": "2026-09-07",
+  "title": "Evia v1.2",
+  "details": "This update adds the official reduced-choice completion requirements used by the 6570-05 Trowel qualification.",
+  "whatsNew": [
+    "6570-05 criteria that require only a stated number of options now complete when that threshold is met, and the same completion state is used in Course and Evia option progress."
+  ]
+}

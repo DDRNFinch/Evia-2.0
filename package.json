@@ -1,0 +1,11 @@
+{
+  "name": "evia",
+  "private": true,
+  "scripts": {
+    "test:smoke": "playwright test",
+    "test:static": "playwright test tests/runtime-manifest.spec.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.55.0"
+  }
+}
