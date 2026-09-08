@@ -1,6 +1,6 @@
-importScripts('./evia-runtime-manifest.js');
+importScripts('./evia-runtime-manifest.js?v=92');
 
-const C='evia-pwa-v91';
+const C='evia-pwa-v92';
 const UPDATE_UI_MARKER='evia-update-ui-ready-v1';
 const RELEASE_VERSION='1.2';
 const RELEASE_MARKER_URL=new URL('./__evia-visible-release-version__',self.registration.scope).href;
