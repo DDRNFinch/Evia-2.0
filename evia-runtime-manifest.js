@@ -20,7 +20,7 @@ const scripts=[
   './evia-approved-naxos-evidence-existing-v2.js',
   './evia-approved-speech-landing-fix.js',
   './evia-approved-evidence-capture-layout-v1.js?v=2',
-  './evia-approved-guided-capture-v1.js',
+  './evia-approved-guided-capture-v1.js?v=2',
   './evia-approved-witness-video-v1.js',
   './evia-evidence-viewer-pack-v2.js?v=2',
   './evia-evidence-ksb-index-v1.js?v=2',
