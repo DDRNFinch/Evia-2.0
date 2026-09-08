@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const VERSION=1;
+const VERSION=2;
 const GUIDABLE=new Set(['photo','photo-range','video','audio','audio-or-text','text']);
 let guide=null;
 
@@ -25,8 +25,14 @@ function promptList(){
   return practical.length&&explanations.length?[...practical,...explanations]:unique;
 }
 function guidableStep(step){return !!step&&GUIDABLE.has(clean(step.type).toLowerCase())}
+function guidanceSlot(step){
+  if(guidableStep(step))return 1;
+  if(clean(step?.type).toLowerCase()!=='choice')return 0;
+  const options=Array.isArray(step?.options)?step.options:[];
+  return options.some(option=>(Array.isArray(option?.steps)?option.steps:[]).some(guidableStep))?1:0;
+}
 function remainingGuidableSteps(){
-  try{return (capturePlan||[]).slice(currentIndex()).filter(guidableStep).length}catch{return 1}
+  try{return (capturePlan||[]).slice(currentIndex()).reduce((total,step)=>total+guidanceSlot(step),0)}catch{return 1}
 }
 function promptQuota(){
   if(!guide)return 0;
@@ -62,9 +68,11 @@ function currentPrompt(step=null){
 }
 function setGuided(active){const el=root();if(el)el.classList.toggle('evia-guided-capture-active',!!active)}
 function progressText(){
-  if(!guide?.prompts?.length)return '';
-  const index=Math.min(guide.prompts.length-1,Math.max(0,guide.cursor));
-  return `${index+1} of ${guide.prompts.length}`;
+  if(!guide)return '';
+  const total=stepPromptCount();
+  if(!total)return '';
+  const index=Math.min(total-1,Math.max(0,(guide.cursor||0)-guide.stepStart));
+  return `${index+1} of ${total}`;
 }
 function panel(){return document.querySelector('#evidenceTop .evia-guided-capture')}
 function renderPanel(step){
